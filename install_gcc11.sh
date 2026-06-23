@@ -4,8 +4,6 @@
 # 使用方法: sudo bash install_gcc11.sh
 #
 
-set -e
-
 RPM_DIR="$(dirname "$(readlink -f "$0")")/rpms/all"
 INSTALL_LOG="/var/log/install_gcc11.log"
 

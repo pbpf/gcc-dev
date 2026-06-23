@@ -1,9 +1,10 @@
 #!/bin/bash
-set -e
 cd /work
 
 echo "=== Running install_gcc11.sh ==="
-bash install_gcc11.sh
+bash install_gcc11.sh; rc=$?
+echo "install_gcc11.sh exit code: $rc"
+set -e
 
 echo ""
 echo "=== Verify GCC version ==="
