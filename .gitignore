@@ -1,0 +1,5 @@
+# RPM packages are large; keep only install script in git
+rpms/
+
+*.log
+llama.cpp/
