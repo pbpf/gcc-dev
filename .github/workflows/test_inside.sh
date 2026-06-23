@@ -10,35 +10,69 @@ echo "=== Verify GCC version ==="
 /opt/rh/devtoolset-11/root/usr/bin/gcc --version
 /usr/local/bin/gcc --version
 
-echo ""
-echo "=== C11 test ==="
-printf '#include <stdio.h>\nint main(void) { printf("C11: OK\\n"); return 0; }\n' > /tmp/c_test.c
-/opt/rh/devtoolset-11/root/usr/bin/gcc -std=c11 -o /tmp/c_test /tmp/c_test.c
-/tmp/c_test
+c_test() {
+    local file="$1" lang="$2" std="$3" label="$4"
+    echo ""
+    echo "=== $label ==="
+    /opt/rh/devtoolset-11/root/usr/bin/"$lang" -std="$std" -o "/tmp/${file%.*}" "/tmp/$file"
+    "/tmp/${file%.*}"
+}
 
-echo ""
-echo "=== C++11 test ==="
-printf '#include <iostream>\nint main() { std::cout << "C++11: OK" << std::endl; return 0; }\n' > /tmp/cpp11.cpp
-/opt/rh/devtoolset-11/root/usr/bin/g++ -std=c++11 -o /tmp/cpp11 /tmp/cpp11.cpp
-/tmp/cpp11
+cat > /tmp/c11.c << 'EOF'
+#include <stdio.h>
+int main(void) {
+    printf("C11: OK\n");
+    return 0;
+}
+EOF
+c_test c11.c gcc c11 "C11 test"
 
-echo ""
-echo "=== C++17 test ==="
-printf '#include <iostream>\n#include <string_view>\nint main() {\n    constexpr std::string_view msg = "C++17: OK";\n    std::cout << msg << std::endl;\n    return 0;\n}\n' > /tmp/cpp17.cpp
-/opt/rh/devtoolset-11/root/usr/bin/g++ -std=c++17 -o /tmp/cpp17 /tmp/cpp17.cpp
-/tmp/cpp17
+cat > /tmp/cpp11.cpp << 'EOF'
+#include <iostream>
+int main() {
+    std::cout << "C++11: OK" << std::endl;
+    return 0;
+}
+EOF
+c_test cpp11.cpp g++ c++11 "C++11 test"
 
-echo ""
-echo "=== C++20 test (concepts) ==="
-printf '#include <iostream>\n#include <concepts>\ntemplate<typename T> requires std::integral<T>\nT add(T a, T b) { return a + b; }\nint main() {\n    std::cout << "C++20 concepts: " << add(3, 4) << std::endl;\n    return 0;\n}\n' > /tmp/cpp20.cpp
-/opt/rh/devtoolset-11/root/usr/bin/g++ -std=c++20 -o /tmp/cpp20 /tmp/cpp20.cpp
-/tmp/cpp20
+cat > /tmp/cpp17.cpp << 'EOF'
+#include <iostream>
+#include <string_view>
+int main() {
+    constexpr std::string_view msg = "C++17: OK";
+    std::cout << msg << std::endl;
+    return 0;
+}
+EOF
+c_test cpp17.cpp g++ c++17 "C++17 test"
 
-echo ""
-echo "=== C++20 test (span) ==="
-printf '#include <iostream>\n#include <span>\n#include <vector>\nint main() {\n    std::vector<int> v = {1, 2, 3, 4, 5};\n    std::span<int> s(v);\n    int sum = 0;\n    for (auto x : s) sum += x;\n    std::cout << "C++20 span sum: " << sum << std::endl;\n    return 0;\n}\n' > /tmp/span.cpp
-/opt/rh/devtoolset-11/root/usr/bin/g++ -std=c++20 -o /tmp/span /tmp/span.cpp
-/tmp/span
+cat > /tmp/cpp20.cpp << 'EOF'
+#include <iostream>
+#include <concepts>
+template<typename T> requires std::integral<T>
+T add(T a, T b) { return a + b; }
+int main() {
+    std::cout << "C++20 concepts: " << add(3, 4) << std::endl;
+    return 0;
+}
+EOF
+c_test cpp20.cpp g++ c++20 "C++20 concepts test"
+
+cat > /tmp/span.cpp << 'EOF'
+#include <iostream>
+#include <span>
+#include <vector>
+int main() {
+    std::vector<int> v = {1, 2, 3, 4, 5};
+    std::span<int> s(v);
+    int sum = 0;
+    for (auto x : s) sum += x;
+    std::cout << "C++20 span sum: " << sum << std::endl;
+    return 0;
+}
+EOF
+c_test span.cpp g++ c++20 "C++20 span test"
 
 echo ""
 echo "=== Installed RPMs ==="

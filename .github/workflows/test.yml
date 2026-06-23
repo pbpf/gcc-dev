@@ -13,9 +13,10 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
-    - name: Build centos:7 test image
+    - name: Build centos:7 test image with vault repos
       run: |
-        printf 'FROM centos:7\nRUN yum install -y which wget glibc-devel glibc-headers kernel-headers\n' > Dockerfile.test
+        echo "FROM centos:7" > Dockerfile.test
+        echo "RUN sed -i -e 's|^mirrorlist=|#mirrorlist=|' -e 's|^#baseurl=http://mirror.centos.org/centos|baseurl=https://vault.centos.org/centos|' /etc/yum.repos.d/CentOS-Base.repo && yum install -y which wget glibc-devel glibc-headers kernel-headers" >> Dockerfile.test
         docker build -t centos7-test -f Dockerfile.test .
 
     - name: Download RPMs from CentOS vault
