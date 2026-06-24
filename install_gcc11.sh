@@ -145,8 +145,67 @@ for pkg in \
         warn "  失败: $(basename "$pkg_file") (exit $?)"
 done
 
-# ========== 5: 验证 + 环境配置 ==========
-info "--- 步骤 5/5: 验证 & 配置 ---"
+# ========== 5: CUDA 12.4 nvcc 工具链 ==========
+info "--- 步骤 5/6: CUDA 12.4 nvcc 工具链 ---"
+
+CUDA_DIR="/usr/local/cuda-12.4"
+CUDA_PKGS=(
+    "cuda-compiler-12-4-*.rpm"
+    "cuda-nvcc-12-4-*.rpm"
+    "cuda-crt-12-4-*.rpm"
+    "cuda-nvvm-12-4-*.rpm"
+    "cuda-cudart-12-4-*.rpm"
+    "cuda-cudart-devel-12-4-*.rpm"
+    "cuda-cccl-12-4-*.rpm"
+    "cuda-driver-devel-12-4-*.rpm"
+    "cuda-cuobjdump-12-4-*.rpm"
+    "cuda-cuxxfilt-12-4-*.rpm"
+    "cuda-nvprune-12-4-*.rpm"
+    "cuda-profiler-api-12-4-*.rpm"
+    "cuda-toolkit-12-4-config-common-*.rpm"
+)
+
+for pattern in "${CUDA_PKGS[@]}"; do
+    pkg_file=$(find "$RPM_DIR" -name "$pattern" -type f 2>/dev/null | head -1)
+    [[ -z "$pkg_file" ]] && { info "  跳过 (未下载): $pattern"; continue; }
+    pkg_name=$(rpm -qp --queryformat '%{NAME}' "$pkg_file" 2>/dev/null)
+    if rpm -q "$pkg_name" &>/dev/null; then
+        info "  已安装: $pkg_name"
+        continue
+    fi
+    info "  安装: $(basename "$pkg_file")"
+    rpm -Uvh --quiet --nodeps "$pkg_file" >> "$INSTALL_LOG" 2>&1 || \
+        warn "  失败: $(basename "$pkg_file") (exit $?)"
+done
+
+# CUDA 环境变量脚本
+cat > /etc/profile.d/cuda-12.4.sh << 'EOF'
+#!/bin/bash
+export CUDA_HOME=/usr/local/cuda-12.4
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$CUDA_HOME/lib:$LD_LIBRARY_PATH
+EOF
+chmod +x /etc/profile.d/cuda-12.4.sh
+
+# 软链接到 /usr/local/bin
+for tool in nvcc nvprune cuobjdump cuxxfilt; do
+    src="/usr/local/cuda-12.4/bin/$tool"
+    dst="/usr/local/bin/$tool"
+    [[ -x "$src" ]] && ln -sf "$src" "$dst"
+done
+
+# 检查 nvcc
+NVC="/usr/local/cuda-12.4/bin/nvcc"
+if [[ -x "$NVC" ]]; then
+    nvcc_ver=$("$NVC" --version | tail -1)
+    echo "  CUDA 路径: $CUDA_DIR" | tee -a "$INSTALL_LOG"
+    echo "  nvcc 版本: $nvcc_ver" | tee -a "$INSTALL_LOG"
+else
+    warn "  nvcc 未安装成功" | tee -a "$INSTALL_LOG"
+fi
+
+# ========== 6: 验证 + 环境配置 ==========
+info "--- 步骤 6/6: 验证 & 配置 ---"
 
 echo "  验证关键包:" | tee -a "$INSTALL_LOG"
 ALL_OK=true
@@ -160,7 +219,15 @@ for pkg in devtoolset-11-runtime devtoolset-11-gcc devtoolset-11-gcc-c++ \
     fi
 done
 
-# 配置环境
+for pkg in cuda-nvcc-12-4 cuda-cudart-devel-12-4; do
+    if rpm -q "$pkg" &>/dev/null; then
+        echo "    OK  $pkg" | tee -a "$INSTALL_LOG"
+    else
+        echo "    FAIL $pkg" | tee -a "$INSTALL_LOG"
+    fi
+done
+
+# 环境配置
 cat > /etc/profile.d/devtoolset-11.sh << 'EOF'
 #!/bin/bash
 if [[ -f /opt/rh/devtoolset-11/enable ]]; then
@@ -177,7 +244,7 @@ done
 
 echo "" | tee -a "$INSTALL_LOG"
 echo "==========================================" | tee -a "$INSTALL_LOG"
-echo "  GCC 11 安装完成!" | tee -a "$INSTALL_LOG"
+echo "  GCC 11 + CUDA 12.4 安装完成!" | tee -a "$INSTALL_LOG"
 echo "==========================================" | tee -a "$INSTALL_LOG"
 echo "" | tee -a "$INSTALL_LOG"
 
@@ -187,10 +254,19 @@ if [[ -x "$DEVTOOLSET_GCC" ]]; then
     echo "  GCC 路径: $DEVTOOLSET_GCC" | tee -a "$INSTALL_LOG"
     echo "  GCC 版本: $gcc_ver" | tee -a "$INSTALL_LOG"
 fi
+if [[ -x "$NVC" ]]; then
+    nvcc_ver=$("$NVC" --version | tail -1)
+    echo "  nvcc 路径: $NVC" | tee -a "$INSTALL_LOG"
+    echo "  nvcc 版本: $nvcc_ver" | tee -a "$INSTALL_LOG"
+fi
 echo "" | tee -a "$INSTALL_LOG"
-echo "使用方法:" | tee -a "$INSTALL_LOG"
-echo "  source /opt/rh/devtoolset-11/enable   (当前 shell)" | tee -a "$INSTALL_LOG"
-echo "  gcc --version                         (软链接)" | tee -a "$INSTALL_LOG"
+echo "编译 llama.cpp 示例:" | tee -a "$INSTALL_LOG"
+echo "  source /etc/profile.d/devtoolset-11.sh" | tee -a "$INSTALL_LOG"
+echo "  source /etc/profile.d/cuda-12.4.sh" | tee -a "$INSTALL_LOG"
+echo "  git clone https://github.com/ggml-org/llama.cpp" | tee -a "$INSTALL_LOG"
+echo "  cd llama.cpp && mkdir build && cd build" | tee -a "$INSTALL_LOG"
+echo '  cmake .. -DGGML_CUDA=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++' | tee -a "$INSTALL_LOG"
+echo "  make -j\$(nproc)" | tee -a "$INSTALL_LOG"
 echo "" | tee -a "$INSTALL_LOG"
 
 $ALL_OK && echo "=== 安装成功 ===" | tee -a "$INSTALL_LOG" || echo "=== 安装有失败, 请查看上方 FAIL 项 ===" | tee -a "$INSTALL_LOG"

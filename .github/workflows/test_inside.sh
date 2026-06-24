@@ -76,9 +76,26 @@ EOF
 c_test span.cpp g++ c++20 "C++20 span test"
 
 echo ""
+echo "=== nvcc compilation test ==="
+source /etc/profile.d/cuda-12.4.sh
+nvcc --version
+cat > /tmp/test_cuda.cu << 'NVEOF'
+__global__ void kernel() {}
+int main() {
+    kernel<<<1,1>>>();
+    return 0;
+}
+NVEOF
+nvcc -std=c++17 -o /tmp/test_cuda /tmp/test_cuda.cu
+echo "nvcc compilation: OK (binary created, no GPU to run)"
+
+echo ""
 echo "=== Installed RPMs ==="
+echo "--- GCC ---"
 rpm -qa | grep devtoolset-11 | sort
+echo "--- CUDA ---"
+rpm -qa | grep cuda-12-4 | sort
 
 echo ""
 echo "=== Symlinks ==="
-ls -la /usr/local/bin/ | grep -E "gcc|g++|c++|gcov"
+ls -la /usr/local/bin/ | grep -E "gcc|g\+\+|c\+\+|gcov|nvcc"
