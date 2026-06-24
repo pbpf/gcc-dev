@@ -13,10 +13,15 @@ jobs:
     steps:
     - uses: actions/checkout@v7
 
-    - name: Build centos:7 test image with vault repos
+    - name: Build centos:7 test image (vault + EPEL + cmake3 + git)
       run: |
         echo "FROM centos:7" > Dockerfile.test
-        echo 'RUN sed -i -e "s|^mirrorlist=|#mirrorlist=|" -e "s|^#baseurl=http://mirror.centos.org/centos|baseurl=https://vault.centos.org/centos|" /etc/yum.repos.d/CentOS-Base.repo && yum install -y which wget glibc-devel glibc-headers kernel-headers' >> Dockerfile.test
+        echo "RUN sed -i -e 's|^mirrorlist=|#mirrorlist=|' -e 's|^#baseurl=http://mirror.centos.org/centos|baseurl=https://vault.centos.org/centos|' /etc/yum.repos.d/CentOS-Base.repo && \
+              yum install -y which wget glibc-devel glibc-headers kernel-headers git && \
+              rpm -Uvh https://archives.fedoraproject.org/pub/archive/epel/7/x86_64/Packages/e/epel-release-7-14.noarch.rpm && \
+              sed -i -e 's|^mirrorlist=|#mirrorlist=|' -e 's|^#baseurl=http://download.fedoraproject.org/pub/epel|baseurl=https://archives.fedoraproject.org/pub/archive/epel|' /etc/yum.repos.d/epel.repo && \
+              yum install -y cmake3 && \
+              alternatives --install /usr/local/bin/cmake cmake /usr/bin/cmake3 100" >> Dockerfile.test
         docker build -t centos7-test -f Dockerfile.test .
 
     - name: Download all RPMs

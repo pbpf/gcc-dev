@@ -90,6 +90,35 @@ nvcc -std=c++17 -o /tmp/test_cuda /tmp/test_cuda.cu
 echo "nvcc compilation: OK (binary created, no GPU to run)"
 
 echo ""
+echo "=== llama.cpp: download & compile (A100 80G x 6) ==="
+source /etc/profile.d/devtoolset-11.sh
+source /etc/profile.d/cuda-12.4.sh
+
+git clone --depth=1 https://github.com/ggml-org/llama.cpp /tmp/llama.cpp
+mkdir /tmp/llama.cpp/build
+cd /tmp/llama.cpp/build
+
+cmake .. \
+  -DGGML_CUDA=ON \
+  -DCMAKE_CUDA_ARCHITECTURES=80 \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=gcc \
+  -DCMAKE_CXX_COMPILER=g++ \
+  -DCMAKE_CUDA_COMPILER=$(which nvcc) \
+  -DLLAMA_CUDA_F16=ON \
+  -DLLAMA_NATIVE=OFF
+
+echo ""
+echo "=== Building llama.cpp (up to 20 min) ==="
+NPROC=$(nproc 2>/dev/null || echo 2)
+make -j$(( NPROC < 4 ? NPROC : 2 )) 2>&1 | tail -30
+
+echo ""
+echo "=== Build artifacts ==="
+find . -maxdepth 1 -executable -type f 2>/dev/null | head -10
+ls -lh bin/ 2>/dev/null || ls -lh ./llama-cli 2>/dev/null || ls -lh ./main 2>/dev/null || echo "no standalone binary found"
+
+echo ""
 echo "=== Installed RPMs ==="
 echo "--- GCC ---"
 rpm -qa | grep devtoolset-11 | sort
