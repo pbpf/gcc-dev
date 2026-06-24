@@ -95,3 +95,9 @@ jobs:
     - name: Run install & tests inside centos:7
       run: |
         docker run --rm -v "$PWD:/work" centos7-test bash /work/.github/workflows/test_inside.sh
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: llama.cpp-A100-80G-x6
+        path: artifacts/
+        if-no-files-found: warn

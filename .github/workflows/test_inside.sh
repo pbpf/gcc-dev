@@ -120,8 +120,10 @@ make -j$(( NPROC < 4 ? NPROC : 2 )) 2>&1 | tail -30
 
 echo ""
 echo "=== Build artifacts ==="
-find . -maxdepth 1 -executable -type f 2>/dev/null | head -10
-ls -lh bin/ 2>/dev/null || ls -lh ./llama-cli 2>/dev/null || ls -lh ./main 2>/dev/null || echo "no standalone binary found"
+mkdir -p /work/artifacts
+find . -maxdepth 1 -executable -type f -exec cp -v {} /work/artifacts/ \; 2>/dev/null
+cp -vr bin/ /work/artifacts/ 2>/dev/null || true
+ls -lh /work/artifacts/ 2>/dev/null || echo "no build artifacts found"
 
 echo ""
 echo "=== Installed RPMs ==="
