@@ -93,7 +93,7 @@ echo ""
 echo "=== CUDA post-install checks ==="
 source /etc/profile.d/cuda-12.4.sh
 echo "cuBLAS: $(test -f /usr/local/cuda-12.4/lib64/libcublas.so && echo 'OK' || echo 'NOT FOUND')"
-echo "NCCL:   $(test -f /usr/local/cuda-12.4/lib64/libnccl.so && echo 'OK' || echo 'NOT FOUND')"
+echo "NCCL:   $(test -f /usr/lib64/libnccl.so && echo 'OK' || echo 'NOT FOUND') (system path)"
 
 echo ""
 echo "=== llama.cpp: download & compile (A100 80G x 6) ==="
@@ -110,7 +110,6 @@ cmake .. \
   -DCMAKE_C_COMPILER=gcc \
   -DCMAKE_CXX_COMPILER=g++ \
   -DCMAKE_CUDA_COMPILER=$(which nvcc) \
-  -DLLAMA_CUDA_F16=ON \
   -DLLAMA_NATIVE=OFF
 
 echo ""
