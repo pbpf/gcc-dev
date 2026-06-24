@@ -81,7 +81,11 @@ jobs:
                  cuda-cuxxfilt-12-4-12.4.127-1.x86_64.rpm \
                  cuda-nvprune-12-4-12.4.127-1.x86_64.rpm \
                  cuda-profiler-api-12-4-12.4.127-1.x86_64.rpm \
-                 cuda-toolkit-12-4-config-common-12.4.127-1.noarch.rpm; do
+                  cuda-toolkit-12-4-config-common-12.4.127-1.noarch.rpm \
+                  libcublas-12-4-12.4.5.8-1.x86_64.rpm \
+                  libcublas-devel-12-4-12.4.5.8-1.x86_64.rpm \
+                  libnccl-2.21.5-1+cuda12.4.x86_64.rpm \
+                  libnccl-devel-2.21.5-1+cuda12.4.x86_64.rpm; do
           dl "$CUDA/$p" "$p"
         done
         wait

@@ -163,6 +163,10 @@ CUDA_PKGS=(
     "cuda-nvprune-12-4-*.rpm"
     "cuda-profiler-api-12-4-*.rpm"
     "cuda-toolkit-12-4-config-common-*.rpm"
+    "libcublas-12-4-*.rpm"
+    "libcublas-devel-12-4-*.rpm"
+    "libnccl-2.21*.rpm"
+    "libnccl-devel-2.21*.rpm"
 )
 
 for pattern in "${CUDA_PKGS[@]}"; do

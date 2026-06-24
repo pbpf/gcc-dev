@@ -90,9 +90,14 @@ nvcc -std=c++17 -o /tmp/test_cuda /tmp/test_cuda.cu
 echo "nvcc compilation: OK (binary created, no GPU to run)"
 
 echo ""
+echo "=== CUDA post-install checks ==="
+source /etc/profile.d/cuda-12.4.sh
+echo "cuBLAS: $(test -f /usr/local/cuda-12.4/lib64/libcublas.so && echo 'OK' || echo 'NOT FOUND')"
+echo "NCCL:   $(test -f /usr/local/cuda-12.4/lib64/libnccl.so && echo 'OK' || echo 'NOT FOUND')"
+
+echo ""
 echo "=== llama.cpp: download & compile (A100 80G x 6) ==="
 source /etc/profile.d/devtoolset-11.sh
-source /etc/profile.d/cuda-12.4.sh
 
 git clone --depth=1 https://github.com/ggml-org/llama.cpp /tmp/llama.cpp
 mkdir /tmp/llama.cpp/build
