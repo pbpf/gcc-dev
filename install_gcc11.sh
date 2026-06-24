@@ -70,7 +70,6 @@ batch_install_dts() {
 # ========== 1: 基础依赖 ==========
 info "--- 步骤 1/5: 基础依赖包 ---"
 install_one "scl-utils-20130529-*.rpm"          "scl-utils" || true
-install_one "scl-utils-build-20130529-*.rpm"    "scl-utils-build" || true
 install_one "gmp-6.0.0-*.rpm"                   "gmp" || true
 install_one "mpfr-3.1.1-*.rpm"                  "mpfr" || true
 install_one "libmpc-1.0.1-*.rpm"                "libmpc" || true
